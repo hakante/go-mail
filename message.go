@@ -3,7 +3,9 @@ package mail
 import (
 	"bytes"
 	"fmt"
+	"log"
 	"net/smtp"
+	"regexp"
 	"time"
 )
 
@@ -19,6 +21,22 @@ func (a *Address) String() string {
 	} else {
 		return Q_Encode(a.Name) + " <" + a.Email + ">"
 	}
+}
+
+var emailRegexp = regexp.MustCompile(`^([0-9A-Za-z\-_.]+@[0-9A-Za-z\-.]+\.[a-z]+)$`)
+
+var nameEmailRegexp = regexp.MustCompile(`^(.*?)\s*<([0-9A-Za-z\-_.]+@[0-9A-Za-z\-.]+\.[a-z]+)>$`)
+
+func ToAddress(s string) Address {
+	if emailRegexp.MatchString(s) {
+		match := emailRegexp.FindStringSubmatch(s)
+		return Address{"", match[1]}
+	} else if nameEmailRegexp.MatchString(s) {
+		match := nameEmailRegexp.FindStringSubmatch(s)
+		return Address{match[1], match[2]}
+	}
+	log.Fatal("Invalid email address: ", s)
+	return Address{"", s}
 }
 
 type Message struct {
